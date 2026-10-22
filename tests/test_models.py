@@ -191,3 +191,39 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(found.count(), count)
         for product in found:
             self.assertEqual(product.category, category)
+
+    def test_deserialize_missing_data(self):
+        """It should not deserialize a Product with missing data"""
+        data = {"id": 1, "name": "Kettle"}
+        product = Product()
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_deserialize_bad_available(self):
+        """It should not deserialize a bad available attribute"""
+        test_product = ProductFactory()
+        data = test_product.serialize()
+        data["available"] = "true"
+        product = Product()
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_deserialize_bad_category(self):
+        """It should not deserialize a bad category attribute"""
+        test_product = ProductFactory()
+        data = test_product.serialize()
+        data["category"] = "unknown"
+        product = Product()
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_find_by_price(self):
+        """It should Find Products by Price"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        price = products[0].price
+        count = len([p for p in products if p.price == price])
+        found = Product.find_by_price(price)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.price, price)
+        found_str = Product.find_by_price(str(price))
+        self.assertEqual(found_str.count(), count)
